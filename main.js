@@ -1,6 +1,11 @@
 const lwnoodle = require('lwnoodle');
-const server = lwnoodle.noodleServer({host:'127.0.0.1'});  
+const server = lwnoodle.noodleServer({host:'0.0.0.0', port:6107});
 server.APPLICATION.Name = 'TPN_MMU Emulator';
+server.ManufacturerName="Lightware Visual Engineering";
+server.ProductName="TPN-MMU-X100";
+server.PartNumber="91710013";
+server.SerialNumber="EMULATOR"
+server.PackageVersion="v0.0.0";
 
 
 // Generic nodes:
@@ -21,6 +26,9 @@ layers.forEach(layer => {
     for (let id=1; id<=3; id++) {
         server.V1.TPNAPP.MEDIA[layer][`MAIN_TX${id}_S0`] = genericTxNode;
         server.V1.TPNAPP.MEDIA[layer][`MAIN_RX${id}_D0`] = genericRxNode;
+        // Create Symlinked nodes under XP as well
+        server.V1.TPNAPP.MEDIA[layer].XP[`MAIN_TX${id}_S0`] = server.V1.TPNAPP.MEDIA[layer][`MAIN_TX${id}_S0`];
+        server.V1.TPNAPP.MEDIA[layer].XP[`MAIN_RX${id}_D0`] = server.V1.TPNAPP.MEDIA[layer][`MAIN_RX${id}_D0`];
 
         // Set RX SourceStream to Read/Write
         server.V1.TPNAPP.MEDIA[layer][`MAIN_RX${id}_D0`].SourceStream__rw__ = true;
