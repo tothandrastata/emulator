@@ -13,19 +13,35 @@ This emulator simulates a TPN_MMU device that manages multiple media layers incl
 - Cross-point (XP) switching functionality for routing streams
 - Built on the lwnoodle server framework
 
-## Installation
+## Development
+
+Install all dependencies including dev dependencies:
 
 ```bash
 npm install
 ```
 
-## Usage
+Run with hot reload (auto-restart on file changes):
 
 ```bash
-node main.js
+npm run dev
 ```
 
 The emulator will start a lwnoodle server on `127.0.0.1` and initialize all media layer nodes.
+
+## Production Deployment
+
+Install only production dependencies (excludes dev tools like nodemon):
+
+```bash
+npm install --production
+```
+
+Run in production mode:
+
+```bash
+npm start
+```
 
 ## Architecture
 
