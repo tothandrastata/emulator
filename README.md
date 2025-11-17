@@ -1,6 +1,6 @@
 # TPN_MMU Emulator
 
-A Node.js-based emulator for TPN_MMU (Taurus Processing Node - Media Management Unit) using the lwnoodle library.
+A Node.js-based emulator for TPN_MMU (TPN Matrix Management Unit) using the lwnoodle library.
 
 ## Description
 
@@ -48,10 +48,3 @@ Example: `MAIN_TX1_S0:MAIN_RX1_D0`
 
 - [lwnoodle](https://www.npmjs.com/package/lwnoodle) - Lightweight WebSocket-based noodle server
 
-## License
-
-[Add your license here]
-
-## Contributing
-
-[Add contribution guidelines here]
