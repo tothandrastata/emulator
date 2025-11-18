@@ -4,11 +4,11 @@ A Node.js-based emulator for TPN_MMU (TPN Matrix Management Unit) using the lwno
 
 ## Description
 
-This emulator simulates a TPN_MMU device that manages multiple media layers including VIDEO, AUDIO, USB (ICRON and HID), and RS232. It provides virtual transmitter (TX) and receiver (RX) nodes for testing and development purposes.
+This emulator simulates a TPN_MMU device that manages multiple media layers including VIDEO, AUDIO, USB (ICRON and HID). It provides virtual transmitter (TX) and receiver (RX) nodes for testing and development purposes.
 
 ## Features
 
-- Supports multiple media layers: VIDEO, AUDIO, USBICRON, USBHID, RS232
+- Supports multiple media layers: VIDEO, AUDIO, USBICRON, USBHID
 - 3 TX/RX node pairs per layer (MAIN_TX1-3_S0 and MAIN_RX1-3_D0)
 - Cross-point (XP) switching functionality for routing streams
 - Built on the lwnoodle server framework
