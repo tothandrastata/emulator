@@ -8,7 +8,7 @@ This emulator simulates a TPN_MMU device that manages multiple media layers incl
 
 ## Features
 
-- Supports multiple media layers: VIDEO, AUDIO, USBICRON, USBHID, RS232
+- Supports multiple media layers: VIDEO, AUDIO, USBICRON, USBHID
 - 3 TX/RX node pairs per layer (MAIN_TX1-3_S0 and MAIN_RX1-3_D0)
 - Cross-point (XP) switching functionality for routing streams
 - Built on the lwnoodle server framework
