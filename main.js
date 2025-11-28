@@ -1,11 +1,51 @@
 const lwnoodle = require('lwnoodle');
-const server = lwnoodle.noodleServer({host:'0.0.0.0', port:6107});
+const os = require('os');
+const serverConfig = {host:'0.0.0.0', port:6107};
+const server = lwnoodle.noodleServer(serverConfig);
 server.APPLICATION.Name = 'TPN_MMU Emulator';
 server.ManufacturerName="Lightware Visual Engineering";
 server.ProductName="TPN-MMU-X100";
 server.PartNumber="91710013";
 server.SerialNumber="EMULATOR"
 server.PackageVersion="v0.0.0";
+
+// Function to get network IP addresses
+function getNetworkAddresses() {
+    const interfaces = os.networkInterfaces();
+    const addresses = [];
+
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+            // Skip internal (loopback) and non-IPv4 addresses
+            if (iface.family === 'IPv4' && !iface.internal) {
+                addresses.push({ name, address: iface.address });
+            }
+        }
+    }
+
+    return addresses;
+}
+
+// Log server information
+console.log('='.repeat(50));
+console.log('TPN_MMU Emulator Server Started');
+console.log('='.repeat(50));
+console.log(`Binding Address: ${serverConfig.host}`);
+console.log(`Server Port: ${serverConfig.port}`);
+console.log('-'.repeat(50));
+
+const networkAddresses = getNetworkAddresses();
+if (networkAddresses.length > 0) {
+    console.log('Server accessible at:');
+    networkAddresses.forEach(({ name, address }) => {
+        console.log(`  ${address}:${serverConfig.port} (${name})`);
+    });
+} else {
+    console.log('No external network interfaces found.');
+    console.log(`Server accessible at: localhost:${serverConfig.port}`);
+}
+
+console.log('='.repeat(50));
 
 const layers = ['VIDEO','AUDIO','USBICRON','USBHID'];
 const roomName = 'MAIN';
@@ -26,7 +66,7 @@ const genericRxNode = {
 
 // Initializing nodes (1-3):
 layers.forEach(layer => {
-    for (let id=1; id<=3; id++) {
+    for (let id=1; id<=10; id++) {
         server.V1.TPNAPP.MEDIA[layer][`${roomName}_TX${id}_S0`] = genericTxNode;
         server.V1.TPNAPP.MEDIA[layer][`${roomName}_RX${id}_D0`] = genericRxNode;
         // Create Symlinked nodes under XP as well
