@@ -57,7 +57,7 @@ const genericTxNode = {
 
 const genericRxNode = {
     SignalPresent: false,
-    SourceStream: 0
+    SourceStream: "",
 };
 
 const matrixSize = 10; // 10x10 matrix
@@ -66,23 +66,23 @@ const matrixSize = 10; // 10x10 matrix
 layers.forEach(layer => {
     for (let id=1; id<=matrixSize; id++) {
         // generate random MAC for each device 
-        let macAddress = `${Math.random().toString(16).slice(2, 8).toUpperCase()}`;
-        server.V1.MEDIA[layer][`${macAddress}_TX${id}_S0`] = genericTxNode;
-        server.V1.MEDIA[layer][`${macAddress}_TX${id}_S0`].StreamName = `TX_${id}_S0`;
+        let txMacAddress = `${Math.random().toString(16).slice(2, 14).toUpperCase()}`;
+        server.V1.MEDIA[layer][`${txMacAddress}_S0`] = genericTxNode;
+        server.V1.MEDIA[layer][`${txMacAddress}_S0`].StreamName = `TX${id}_S0`;
         
-        macAddress = `${Math.random().toString(16).slice(2, 8).toUpperCase()}`;
-        server.V1.MEDIA[layer][`${macAddress}_RX${id}_D0`] = genericRxNode;
-        server.V1.MEDIA[layer][`${macAddress}_RX${id}_D0`].StreamName = `RX_${id}_S0`;
+        let rxMacAddress = `${Math.random().toString(16).slice(2, 14).toUpperCase()}`;
+        server.V1.MEDIA[layer][`${rxMacAddress}_D0`] = genericRxNode;
+        server.V1.MEDIA[layer][`${rxMacAddress}_D0`].StreamName = `RX${id}_D0`;
 
         // Create Symlinked nodes under XP as well
-        server.V1.MEDIA[layer].XP[`${macAddress}_TX${id}_S0`] = server.V1.MEDIA[layer][`${macAddress}_TX${id}_S0`];
-        server.V1.MEDIA[layer].XP[`${macAddress}_RX${id}_D0`] = server.V1.MEDIA[layer][`${macAddress}_RX${id}_D0`];
+        server.V1.MEDIA[layer].XP[`${txMacAddress}_S0`] = server.V1.MEDIA[layer][`${txMacAddress}_S0`];
+        server.V1.MEDIA[layer].XP[`${rxMacAddress}_D0`] = server.V1.MEDIA[layer][`${rxMacAddress}_D0`];
   
         // Set RX SourceStream to Read/Write
-        server.V1.MEDIA[layer][`${macAddress}_RX${id}_D0`].SourceStream__rw__ = true;
+        server.V1.MEDIA[layer][`${rxMacAddress}_D0`].SourceStream__rw__ = true;
 
         // only for testing purposes, allow TX SignalPresent to be set manually
-        server.V1.MEDIA[layer][`${macAddress}_TX${id}_S0`].SignalPresent__rw__ = true;
+        server.V1.MEDIA[layer][`${txMacAddress}_S0`].SignalPresent__rw__ = true;
         
         // Implement the XP switch command
         server.V1.MEDIA[layer].XP = {
@@ -90,7 +90,7 @@ layers.forEach(layer => {
         };
 
         // If any TX signal present is changed then the connected RXs (can be multiple) signal present propoerties are to be updated accordingly.
-        server.V1.MEDIA[layer][`${macAddress}_TX${id}_S0`].on('SignalPresent', (path, prop, value) => {
+        server.V1.MEDIA[layer][`${txMacAddress}_S0`].on('SignalPresent', (path, prop, value) => {
             handleTxSignalPresentChange(layer, path, prop, value);
         });
     }
@@ -133,19 +133,15 @@ const handleXPSwitch = (layer, command) => {
         throw new Error(`Destination stream ${dest} not found in layer ${layer}`);
     }
 
-    
-
-    // If source stream is not enabled, throw exception
-    if (!server.V1.MEDIA[layer][src].Enabled) {
-        throw new Error(`Source stream ${src} is not enabled`);
-    }
-
+ 
     // OK, now we can set the SourceStream of the destination to the source
-    server.V1.MEDIA[layer][dest].SourceStream = src;
+    server.V1.MEDIA[layer][destNodeName].SourceStream = srcNodeName;
+    server.V1.MEDIA[layer][destNodeName].SourceStreamName = src;
+    console.log(`Switched ${dest} to source ${src}`);
 
     // If signal is present on the source, set it on the destination as well
-    const signalPresent = server.V1.MEDIA[layer][src].SignalPresent;
-    server.V1.MEDIA[layer][dest].SignalPresent = signalPresent;
+    const signalPresent = server.V1.MEDIA[layer][srcNodeName].SignalPresent;
+    server.V1.MEDIA[layer][destNodeName].SignalPresent = signalPresent;
 };
 
 // Function to handle TX SignalPresent changes and propagate to connected RXs
@@ -159,7 +155,7 @@ const handleTxSignalPresentChange = (layer, path, prop, value) => {
     Object.keys(server.V1.MEDIA[layer]).forEach(nodeName => {
         const node = server.V1.MEDIA[layer][nodeName];
         // console.log(`Checking node ${nodeName} with SourceStream ${node.SourceStream}`);
-        if (nodeName.startsWith(`${roomName}_RX`) && node.SourceStream === txStreamName) {
+        if (nodeName.endsWith('_D0') && node.SourceStream === txStreamName) {
             console.log(`Updating SignalPresent on ${nodeName} to ${value}`);
             node.SignalPresent = value;
         }
