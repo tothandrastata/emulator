@@ -68,11 +68,11 @@ layers.forEach(layer => {
         // generate random MAC for each device 
         let txMacAddress = `${Math.random().toString(16).slice(2, 14).toUpperCase()}`;
         server.V1.MEDIA[layer][`${txMacAddress}_S0`] = genericTxNode;
-        server.V1.MEDIA[layer][`${txMacAddress}_S0`].StreamName = `TX${id}_S0`;
+        server.V1.MEDIA[layer][`${txMacAddress}_S0`].StreamAlias = `TX${id}_S0`;
         
         let rxMacAddress = `${Math.random().toString(16).slice(2, 14).toUpperCase()}`;
         server.V1.MEDIA[layer][`${rxMacAddress}_D0`] = genericRxNode;
-        server.V1.MEDIA[layer][`${rxMacAddress}_D0`].StreamName = `RX${id}_D0`;
+        server.V1.MEDIA[layer][`${rxMacAddress}_D0`].StreamAlias = `RX${id}_D0`;
 
         // Create Symlinked nodes under XP as well
         server.V1.MEDIA[layer].XP[`${txMacAddress}_S0`] = server.V1.MEDIA[layer][`${txMacAddress}_S0`];
@@ -96,11 +96,11 @@ layers.forEach(layer => {
     }
 });
 
-// Find the node of the layer that contains the given StreamName
-const findNodeByStreamName = (layer, streamName) => {
+// Find the node of the layer that contains the given StreamAlias
+const findNodeByStreamAlias = (layer, StreamAlias) => {
     const mediaJson = server.V1.MEDIA[layer].toJSON();
     for (const [nodeName, node] of Object.entries(mediaJson)) {
-        if (node.StreamName === streamName) {
+        if (node.StreamAlias === StreamAlias) {
             return nodeName;
         }
     }
@@ -121,14 +121,14 @@ const handleXPSwitch = (layer, command) => {
     // Get source and destination from command
     const [src, dest] = command.split(':');
 
-    // Check if the source exists among the "_S0" as StreamName in the layer
-    const srcNodeName = findNodeByStreamName(layer, src);
+    // Check if the source exists among the "_S0" as StreamAlias in the layer
+    const srcNodeName = findNodeByStreamAlias(layer, src);
     if (!srcNodeName || !srcNodeName?.endsWith('_S0')) {
         throw new Error(`Source stream ${src} not found in layer ${layer}`);
     }
 
-    // Check if the destination exists among the "_D0" as StreamName in the layer
-    const destNodeName = findNodeByStreamName(layer, dest);
+    // Check if the destination exists among the "_D0" as StreamAlias in the layer
+    const destNodeName = findNodeByStreamAlias(layer, dest);
     if (!destNodeName || !destNodeName?.endsWith('_D0')) {
         throw new Error(`Destination stream ${dest} not found in layer ${layer}`);
     }
@@ -136,7 +136,7 @@ const handleXPSwitch = (layer, command) => {
  
     // OK, now we can set the SourceStream of the destination to the source
     server.V1.MEDIA[layer][destNodeName].SourceStream = srcNodeName;
-    server.V1.MEDIA[layer][destNodeName].SourceStreamName = src;
+    server.V1.MEDIA[layer][destNodeName].SourceStreamAlias = src;
     console.log(`Switched ${dest} to source ${src}`);
 
     // If signal is present on the source, set it on the destination as well
@@ -148,14 +148,14 @@ const handleXPSwitch = (layer, command) => {
 const handleTxSignalPresentChange = (layer, path, prop, value) => {
     // Find all RXs connected to this TX
     // Get the TX name from the path like "/V1/TPNAPP/MEDIA/VIDEO/MAIN_TX1_S0"
-    // txStreamName is like MAIN_TX1_S0
-    const txStreamName = path.split('/').pop();
-    console.log(`SignalPresent changed on ${txStreamName} to ${value}`);
+    // txStreamAlias is like MAIN_TX1_S0
+    const txStreamAlias = path.split('/').pop();
+    console.log(`SignalPresent changed on ${txStreamAlias} to ${value}`);
 
     Object.keys(server.V1.MEDIA[layer]).forEach(nodeName => {
         const node = server.V1.MEDIA[layer][nodeName];
         // console.log(`Checking node ${nodeName} with SourceStream ${node.SourceStream}`);
-        if (nodeName.endsWith('_D0') && node.SourceStream === txStreamName) {
+        if (nodeName.endsWith('_D0') && node.SourceStream === txStreamAlias) {
             console.log(`Updating SignalPresent on ${nodeName} to ${value}`);
             node.SignalPresent = value;
         }
