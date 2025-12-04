@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node main.js",
     "dev": "nodemon main.js",
+    "build": "node build.js",
     "build:linux-arm": "pkg main.js --targets node16-linux-armv7 --output dist/tpn-mmu-emulator",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

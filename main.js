@@ -52,7 +52,7 @@ const layers = ['VIDEO','AUDIO','USBICRON','USBHID']
 // Generic nodes:
 const genericTxNode = {
     StreamAlias: "",
-    SignalPresent: false,
+    SignalPresent: true,
     Enabled: true
 };
 
@@ -63,7 +63,7 @@ const genericRxNode = {
     SourceStreamAlias: "",
 };
 
-const matrixSize = 2; // 2x2 matrix
+const matrixSize = 3; // 3x3 matrix
 
 // Initializing nodes:
 layers.forEach(layer => {
