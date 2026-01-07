@@ -1,13 +1,30 @@
+require('dotenv').config();
 const lwnoodle = require('lwnoodle');
 const os = require('os');
-const serverConfig = {host:'0.0.0.0', port:6107};
+const { WebServer } = require('./web/WebServer');
+
+// Load configuration from .env file
+const serverConfig = {
+    host: process.env.LW3_HOST || '0.0.0.0',
+    port: parseInt(process.env.LW3_PORT) || 7107
+};
+
+const webUIConfig = {
+    host: process.env.WEB_UI_HOST || '0.0.0.0',
+    port: parseInt(process.env.WEB_UI_PORT) || 8081,
+    enabled: process.env.WEB_UI_ENABLED !== 'false'
+};
+
+const matrixSize = parseInt(process.env.MATRIX_SIZE) || 3;
+
+// Initialize LW3 server
 const server = lwnoodle.noodleServer(serverConfig);
 server.APPLICATION.Name = 'TPN_MMU Emulator';
-server.ManufacturerName="Lightware Visual Engineering";
-server.ProductName="TPN-MMU-X100";
-server.PartNumber="91710013";
-server.SerialNumber="EMULATOR"
-server.PackageVersion="v0.0.0";
+server.ManufacturerName = process.env.MANUFACTURER_NAME || "Lightware Visual Engineering";
+server.ProductName = process.env.PRODUCT_NAME || "TPN-MMU-X100";
+server.PartNumber = process.env.PART_NUMBER || "91710013";
+server.SerialNumber = process.env.SERIAL_NUMBER || "EMULATOR";
+server.PackageVersion = process.env.PACKAGE_VERSION || "v0.0.0";
 
 // Function to get network IP addresses
 function getNetworkAddresses() {
@@ -63,40 +80,59 @@ const genericRxNode = {
     SourceStreamAlias: "",
 };
 
-const matrixSize = 3; // 3x3 matrix
-
 // Initializing nodes:
 layers.forEach(layer => {
+    const txNodes = [];
+    const rxNodes = [];
+
+    // Create all TX and RX nodes
     for (let id=1; id<=matrixSize; id++) {
-        // generate random MAC for each device 
+        // generate random MAC for each device
         let txMacAddress = `${Math.random().toString(16).slice(2, 14).toUpperCase()}`;
-        server.V1.MEDIA[layer][`${txMacAddress}_S0`] = genericTxNode;
-        server.V1.MEDIA[layer][`${txMacAddress}_S0`].StreamAlias = `TX${id}_S0`;
-        
+        let txNodeName = `${txMacAddress}_S0`;
+        server.V1.MEDIA[layer][txNodeName] = genericTxNode;
+        server.V1.MEDIA[layer][txNodeName].StreamAlias = `TX${id}_S0`;
+        txNodes.push({ id, nodeName: txNodeName, alias: `TX${id}_S0` });
+
         let rxMacAddress = `${Math.random().toString(16).slice(2, 14).toUpperCase()}`;
-        server.V1.MEDIA[layer][`${rxMacAddress}_D0`] = genericRxNode;
-        server.V1.MEDIA[layer][`${rxMacAddress}_D0`].StreamAlias = `RX${id}_D0`;
+        let rxNodeName = `${rxMacAddress}_D0`;
+        server.V1.MEDIA[layer][rxNodeName] = genericRxNode;
+        server.V1.MEDIA[layer][rxNodeName].StreamAlias = `RX${id}_D0`;
+        rxNodes.push({ id, nodeName: rxNodeName, alias: `RX${id}_D0` });
 
         // Create Symlinked nodes under XP as well
-        server.V1.MEDIA[layer].XP[`${txMacAddress}_S0`] = server.V1.MEDIA[layer][`${txMacAddress}_S0`];
-        server.V1.MEDIA[layer].XP[`${rxMacAddress}_D0`] = server.V1.MEDIA[layer][`${rxMacAddress}_D0`];
-  
+        server.V1.MEDIA[layer].XP[txNodeName] = server.V1.MEDIA[layer][txNodeName];
+        server.V1.MEDIA[layer].XP[rxNodeName] = server.V1.MEDIA[layer][rxNodeName];
+
         // Set RX SourceStream to Read/Write
-        server.V1.MEDIA[layer][`${rxMacAddress}_D0`].SourceStream__rw__ = true;
+        server.V1.MEDIA[layer][rxNodeName].SourceStream__rw__ = true;
 
         // only for testing purposes, allow TX SignalPresent to be set manually
-        server.V1.MEDIA[layer][`${txMacAddress}_S0`].SignalPresent__rw__ = true;
-        
-        // Implement the XP switch command
-        server.V1.MEDIA[layer].XP = {
-            switch: (command) => handleXPSwitch(layer, command)
-        };
+        server.V1.MEDIA[layer][txNodeName].SignalPresent__rw__ = true;
 
         // If any TX signal present is changed then the connected RXs (can be multiple) signal present propoerties are to be updated accordingly.
-        server.V1.MEDIA[layer][`${txMacAddress}_S0`].on('SignalPresent', (path, prop, value) => {
+        server.V1.MEDIA[layer][txNodeName].on('SignalPresent', (path, prop, value) => {
             handleTxSignalPresentChange(layer, path, prop, value);
         });
     }
+
+    // Connect each RX to its corresponding TX by default (O1->I1, O2->I2, O3->I3)
+    for (let i = 0; i < rxNodes.length; i++) {
+        const rxNode = rxNodes[i];
+        const txNode = txNodes[i];
+
+        server.V1.MEDIA[layer][rxNode.nodeName].SourceStream = txNode.nodeName;
+        server.V1.MEDIA[layer][rxNode.nodeName].SourceStreamAlias = txNode.alias;
+        // Copy signal present from TX to RX
+        server.V1.MEDIA[layer][rxNode.nodeName].SignalPresent = server.V1.MEDIA[layer][txNode.nodeName].SignalPresent;
+
+        console.log(`${layer}: Connected ${rxNode.alias} to ${txNode.alias}`);
+    }
+
+    // Implement the XP switch command
+    server.V1.MEDIA[layer].XP = {
+        switch: (command) => handleXPSwitch(layer, command)
+    };
 });
 
 // Find the node of the layer that contains the given StreamAlias
@@ -164,3 +200,11 @@ const handleTxSignalPresentChange = (layer, path, prop, value) => {
         }
     });
 };
+
+// Initialize and start the web server
+if (webUIConfig.enabled) {
+    const webServer = new WebServer(server, webUIConfig);
+    webServer.start(webUIConfig.port, webUIConfig.host).catch(err => {
+        console.error('Failed to start Web UI:', err);
+    });
+}

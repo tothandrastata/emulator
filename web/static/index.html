@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TPN-MMU Emulator Control Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .device-info {
+            display: flex;
+            gap: 30px;
+            margin-top: 15px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .device-info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .device-info-label {
+            font-weight: 600;
+            color: #444;
+        }
+
+        .section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+        }
+
+        .section h2 {
+            color: #333;
+            font-size: 22px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .status-indicator {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-active {
+            background: #4caf50;
+            box-shadow: 0 0 8px rgba(76, 175, 80, 0.6);
+        }
+
+        .status-inactive {
+            background: #ccc;
+        }
+
+        .card-body {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .property {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .property:last-child {
+            border-bottom: none;
+        }
+
+        .property-label {
+            font-weight: 500;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .property-value {
+            font-family: 'Courier New', monospace;
+            color: #333;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: background 0.2s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-success {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #45a049;
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #da190b;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 18px;
+        }
+
+        .error {
+            background: #ffebee;
+            border: 2px solid #f44336;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .refresh-info {
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+            margin-top: 10px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 6px;
+        }
+
+        /* Crosspoint Matrix Styles */
+        .xp-matrix {
+            display: table;
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .xp-row {
+            display: table-row;
+        }
+
+        .xp-cell {
+            display: table-cell;
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+            background: #f8f9fa;
+            min-width: 60px;
+            height: 60px;
+            vertical-align: middle;
+        }
+
+        .xp-header {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .xp-label {
+            background: #e0e0e0;
+            font-weight: 600;
+            color: #333;
+            font-size: 13px;
+        }
+
+        .xp-cell-active {
+            background: #4caf50;
+            position: relative;
+        }
+
+        .xp-cell-active::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30px;
+            height: 30px;
+            background: #2e7d32;
+            border-radius: 4px;
+        }
+
+        .xp-cell-inactive {
+            background: #f8f9fa;
+            cursor: default;
+        }
+
+        .layer-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .layer-tab {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .layer-tab:hover {
+            background: #f0f0ff;
+        }
+
+        .layer-tab.active {
+            background: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>TPN-MMU Emulator Control Panel</h1>
+            <div id="device-info" class="device-info">
+                <div class="loading">Loading device information...</div>
+            </div>
+        </div>
+
+        <div id="error-container"></div>
+
+        <div class="section">
+            <h2>Layer Selection</h2>
+            <div class="layer-tabs">
+                <button class="layer-tab active" onclick="selectLayer('VIDEO')">VIDEO</button>
+                <button class="layer-tab" onclick="selectLayer('AUDIO')">AUDIO</button>
+                <button class="layer-tab" onclick="selectLayer('USBICRON')">USB ICRON</button>
+                <button class="layer-tab" onclick="selectLayer('USBHID')">USB HID</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 id="crosspoint-title">VIDEO Crosspoint Matrix</h2>
+            <div id="crosspoint-matrix">
+                <div class="loading">Loading crosspoint matrix...</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 id="inputs-title">VIDEO Inputs (TX)</h2>
+            <div id="inputs-grid" class="cards-grid">
+                <div class="loading">Loading inputs...</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 id="outputs-title">VIDEO Outputs (RX)</h2>
+            <div id="outputs-grid" class="cards-grid">
+                <div class="loading">Loading outputs...</div>
+            </div>
+            <div class="refresh-info">
+                Auto-refresh every 2 seconds
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '';
+        let currentLayer = 'VIDEO';
+
+        // Select layer
+        function selectLayer(layer) {
+            currentLayer = layer;
+
+            // Update active tab
+            document.querySelectorAll('.layer-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.textContent.replace(/ /g, '') === layer) {
+                    tab.classList.add('active');
+                }
+            });
+
+            // Update section titles
+            document.getElementById('crosspoint-title').textContent = `${layer} Crosspoint Matrix`;
+            document.getElementById('inputs-title').textContent = `${layer} Inputs (TX)`;
+            document.getElementById('outputs-title').textContent = `${layer} Outputs (RX)`;
+
+            // Refresh data
+            fetchCrosspoint();
+            fetchInputs();
+            fetchOutputs();
+        }
+
+        // Fetch device status
+        async function fetchStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/api/status`);
+                const data = await response.json();
+                renderDeviceInfo(data);
+            } catch (error) {
+                console.error('Error fetching status:', error);
+                showError('Failed to fetch device status');
+            }
+        }
+
+        // Fetch crosspoint matrix for current layer
+        async function fetchCrosspoint() {
+            try {
+                const response = await fetch(`${API_BASE}/api/layer/${currentLayer}/crosspoint`);
+                const data = await response.json();
+                renderCrosspoint(data);
+            } catch (error) {
+                console.error('Error fetching crosspoint:', error);
+                showError('Failed to fetch crosspoint matrix');
+            }
+        }
+
+        // Fetch all inputs for current layer
+        async function fetchInputs() {
+            try {
+                const response = await fetch(`${API_BASE}/api/layer/${currentLayer}/inputs`);
+                const data = await response.json();
+                renderInputs(data.inputs);
+            } catch (error) {
+                console.error('Error fetching inputs:', error);
+                showError('Failed to fetch inputs');
+            }
+        }
+
+        // Fetch all outputs for current layer
+        async function fetchOutputs() {
+            try {
+                const response = await fetch(`${API_BASE}/api/layer/${currentLayer}/outputs`);
+                const data = await response.json();
+                renderOutputs(data.outputs);
+            } catch (error) {
+                console.error('Error fetching outputs:', error);
+                showError('Failed to fetch outputs');
+            }
+        }
+
+        // Set input signal presence
+        async function setSignalPresent(inputAlias, signalPresent) {
+            try {
+                const response = await fetch(`${API_BASE}/api/layer/${currentLayer}/inputs/${inputAlias}/signal`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ signalPresent })
+                });
+                if (response.ok) {
+                    await fetchInputs();
+                    await fetchCrosspoint();
+                }
+            } catch (error) {
+                console.error('Error setting signal:', error);
+                showError(`Failed to set signal for ${inputAlias}`);
+            }
+        }
+
+        // Render device info
+        function renderDeviceInfo(data) {
+            const container = document.getElementById('device-info');
+            container.innerHTML = `
+                <div class="device-info-item">
+                    <span class="device-info-label">Product:</span>
+                    <span>${data.productName}</span>
+                </div>
+                <div class="device-info-item">
+                    <span class="device-info-label">Part Number:</span>
+                    <span>${data.partNumber}</span>
+                </div>
+                <div class="device-info-item">
+                    <span class="device-info-label">Version:</span>
+                    <span>${data.packageVersion}</span>
+                </div>
+                <div class="device-info-item">
+                    <span class="device-info-label">Matrix Size:</span>
+                    <span>3x3</span>
+                </div>
+            `;
+        }
+
+        // Render crosspoint matrix
+        function renderCrosspoint(data) {
+            const container = document.getElementById('crosspoint-matrix');
+            if (!data.matrix || data.matrix.length === 0) {
+                container.innerHTML = '<div class="loading">No crosspoint data available</div>';
+                return;
+            }
+
+            // Build the matrix HTML
+            let html = '<div class="xp-matrix">';
+
+            // Header row with input labels
+            html += '<div class="xp-row">';
+            html += '<div class="xp-cell xp-header"></div>'; // Top-left corner
+            data.inputs.forEach(input => {
+                html += `<div class="xp-cell xp-header">${input.alias}</div>`;
+            });
+            html += '</div>';
+
+            // Output rows
+            data.matrix.forEach(output => {
+                html += '<div class="xp-row">';
+                html += `<div class="xp-cell xp-label">${output.alias}</div>`;
+
+                data.inputs.forEach(input => {
+                    const isConnected = output.sourceStreamAlias === input.alias;
+                    const cellClass = isConnected ? 'xp-cell-active' : 'xp-cell-inactive';
+                    html += `<div class="xp-cell ${cellClass}"></div>`;
+                });
+
+                html += '</div>';
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // Render inputs
+        function renderInputs(inputs) {
+            const container = document.getElementById('inputs-grid');
+            if (!inputs || inputs.length === 0) {
+                container.innerHTML = '<div class="loading">No inputs available</div>';
+                return;
+            }
+
+            container.innerHTML = inputs.map(input => `
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">${input.alias}</span>
+                        <span class="status-indicator ${input.signalPresent ? 'status-active' : 'status-inactive'}"
+                              title="${input.signalPresent ? 'Signal Present' : 'No Signal'}"></span>
+                    </div>
+                    <div class="card-body">
+                        <div class="property">
+                            <span class="property-label">Enabled:</span>
+                            <span class="property-value">${input.enabled ? 'Yes' : 'No'}</span>
+                        </div>
+                        <div class="property">
+                            <span class="property-label">Signal Present:</span>
+                            <span class="property-value">${input.signalPresent ? 'Yes' : 'No'}</span>
+                        </div>
+                        <div class="button-group">
+                            <button class="btn-success" onclick="setSignalPresent('${input.alias}', true)">
+                                Signal ON
+                            </button>
+                            <button class="btn-danger" onclick="setSignalPresent('${input.alias}', false)">
+                                Signal OFF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Render outputs
+        function renderOutputs(outputs) {
+            const container = document.getElementById('outputs-grid');
+            if (!outputs || outputs.length === 0) {
+                container.innerHTML = '<div class="loading">No outputs available</div>';
+                return;
+            }
+
+            container.innerHTML = outputs.map(output => `
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">${output.alias}</span>
+                        <span class="status-indicator ${output.signalPresent ? 'status-active' : 'status-inactive'}"
+                              title="${output.signalPresent ? 'Signal Present' : 'No Signal'}"></span>
+                    </div>
+                    <div class="card-body">
+                        <div class="property">
+                            <span class="property-label">Source Stream:</span>
+                            <span class="property-value">${output.sourceStreamAlias || 'None'}</span>
+                        </div>
+                        <div class="property">
+                            <span class="property-label">Signal Present:</span>
+                            <span class="property-value">${output.signalPresent ? 'Yes' : 'No'}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Show error message
+        function showError(message) {
+            const container = document.getElementById('error-container');
+            container.innerHTML = `<div class="error">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        // Initialize and start auto-refresh
+        async function init() {
+            await fetchStatus();
+            await fetchCrosspoint();
+            await fetchInputs();
+            await fetchOutputs();
+
+            // Auto-refresh every 2 seconds
+            setInterval(async () => {
+                await fetchCrosspoint();
+                await fetchInputs();
+                await fetchOutputs();
+            }, 2000);
+        }
+
+        // Start the application
+        init();
+    </script>
+</body>
+</html>

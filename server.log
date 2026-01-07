@@ -1,0 +1,36 @@
+[dotenv@17.2.3] injecting env (12) from .env -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
+==================================================
+TPN_MMU Emulator Server Started
+==================================================
+Binding Address: 0.0.0.0
+Server Port: 7107
+--------------------------------------------------
+Server accessible at:
+  172.18.112.1:7107 (vEthernet (WSL (Hyper-V firewall)))
+  192.168.2.117:7107 (Ethernet)
+==================================================
+Static files served from: c:\Taurus\LARA\TPN_MMU\emulator\web\static
+node:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use 0.0.0.0:7107
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+Emitted 'error' event on LwServer instance at:
+    at TcpServerConnection.<anonymous> (c:\Taurus\LARA\TPN_MMU\emulator\node_modules\lwnoodle\lib\lwserver.js:113:23)
+    at TcpServerConnection.emit (node:events:519:28)
+    at TcpServerConnection.serverError (c:\Taurus\LARA\TPN_MMU\emulator\node_modules\lwnoodle\lib\tcpserverconnection.js:56:14)
+    at Server.emit (node:events:519:28)
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 7107
+}
+
+Node.js v22.20.0
