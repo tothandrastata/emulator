@@ -156,25 +156,52 @@ npm run dev
 
 ## Building for Production
 
-Create a production distribution package:
+Create a production distribution package and ZIP file:
 
 ```bash
 npm run build
 ```
 
-This creates a `dist/` folder containing:
-- Compiled emulator code
-- Web UI files
-- All production dependencies
-- Configuration files
+This creates:
+- **`dist/` folder** - Ready-to-run distribution directory
+- **`tpn-mmu-emulator-v1.0.0.zip`** - Compressed production package (~3.4 MB)
+
+The package includes:
+- Main emulator code
+- Web UI files (HTML, CSS, JS)
+- All production dependencies (node_modules)
+- Configuration files (.env.example)
+- Startup scripts (start.sh, start.bat)
 
 The distribution package is ready for deployment and requires only Node.js >= 18.0.0.
 
-### Running the Built Package
+### Deploying the Production Package
 
+**Option 1: Using the ZIP file**
 ```bash
-cd dist
+# Extract the ZIP file
+unzip tpn-mmu-emulator-v1.0.0.zip -d /path/to/deployment
+
+# Navigate to deployment directory
+cd /path/to/deployment
+
+# Run with startup script (recommended)
+./start.sh          # Linux/macOS
+start.bat           # Windows
+
+# Or run directly
 node main.js
+```
+
+**Option 2: Using the dist folder**
+```bash
+# Copy the dist folder to deployment location
+cp -r dist /path/to/deployment
+
+# Navigate and run
+cd /path/to/deployment
+./start.sh          # Linux/macOS
+start.bat           # Windows
 ```
 
 ## Architecture
