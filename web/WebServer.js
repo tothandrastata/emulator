@@ -8,13 +8,21 @@ const path = require('path');
  * Provides a REST API and web-based control interface
  */
 class WebServer {
-  constructor(noodleServer, config) {
+  constructor(noodleServer, config, emulator = null) {
     this.noodleServer = noodleServer;
     this.config = config;
+    this.emulator = emulator;
     this.app = Fastify({ logger: false });
 
     this.setupMiddleware();
     this.setupRoutes();
+  }
+
+  /**
+   * Update the noodle server reference (used when server is recreated)
+   */
+  updateServer(noodleServer) {
+    this.noodleServer = noodleServer;
   }
 
   /**
@@ -46,6 +54,7 @@ class WebServer {
   setupRoutes() {
     this.registerStatusRoute();
     this.registerLayerRoutes();
+    this.registerTcpRoutes();
   }
 
   /**
@@ -53,13 +62,29 @@ class WebServer {
    */
   registerStatusRoute() {
     this.app.get('/api/status', async (_request, _reply) => {
-      return {
+      const response = {
         productName: this.noodleServer.ProductName,
         partNumber: this.noodleServer.PartNumber,
         serialNumber: this.noodleServer.SerialNumber,
         packageVersion: this.noodleServer.PackageVersion,
         matrixSize: 3
       };
+      
+      // Include TCP server state and port if emulator is available
+      if (this.emulator) {
+        if (typeof this.emulator.isTcpServerEnabled === 'function') {
+          response.tcpServerEnabled = this.emulator.isTcpServerEnabled();
+        } else if (typeof this.emulator.tcpServerEnabled !== 'undefined') {
+          response.tcpServerEnabled = this.emulator.tcpServerEnabled;
+        }
+        
+        // Include TCP port from server config
+        if (this.emulator.serverConfig && this.emulator.serverConfig.port) {
+          response.tcpPort = this.emulator.serverConfig.port;
+        }
+      }
+      
+      return response;
     });
   }
 
@@ -201,6 +226,41 @@ class WebServer {
         alias: alias,
         signalPresent: mediaLayer[foundNodeName].SignalPresent
       };
+    });
+  }
+
+  /**
+   * Register TCP server control routes
+   */
+  registerTcpRoutes() {
+    // POST /api/tcp/disable
+    this.app.post('/api/tcp/disable', async (_request, _reply) => {
+      if (!this.emulator || typeof this.emulator.stopTcpServer !== 'function') {
+        return _reply.code(500).send({ error: 'Emulator instance not available' });
+      }
+
+      try {
+        await this.emulator.stopTcpServer();
+        return { success: true, message: 'TCP server disabled' };
+      } catch (error) {
+        console.error('Error disabling TCP server:', error);
+        return _reply.code(500).send({ error: error.message || 'Failed to disable TCP server' });
+      }
+    });
+
+    // POST /api/tcp/enable
+    this.app.post('/api/tcp/enable', async (_request, _reply) => {
+      if (!this.emulator || typeof this.emulator.startTcpServer !== 'function') {
+        return _reply.code(500).send({ error: 'Emulator instance not available' });
+      }
+
+      try {
+        await this.emulator.startTcpServer();
+        return { success: true, message: 'TCP server enabled' };
+      } catch (error) {
+        console.error('Error enabling TCP server:', error);
+        return _reply.code(500).send({ error: error.message || 'Failed to enable TCP server' });
+      }
     });
   }
 

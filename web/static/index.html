@@ -302,6 +302,78 @@
             background: #667eea;
             color: white;
         }
+
+        /* TCP Toggle Styles */
+        .tcp-toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 15px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .tcp-toggle-label {
+            font-weight: 600;
+            color: #444;
+            font-size: 14px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: #4caf50;
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .toggle-switch input:disabled + .toggle-slider {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        #tcp-status {
+            font-weight: 600;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -310,6 +382,14 @@
             <h1>TPN-MMU Emulator Control Panel</h1>
             <div id="device-info" class="device-info">
                 <div class="loading">Loading device information...</div>
+            </div>
+            <div class="tcp-toggle-container">
+                <span class="tcp-toggle-label" id="tcp-toggle-label">TCP Control Server:</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="tcp-toggle" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+                <span id="tcp-status" class="device-info-label">Enabled</span>
             </div>
         </div>
 
@@ -464,6 +544,33 @@
                     <span>3x3</span>
                 </div>
             `;
+
+            // Update TCP toggle state and port
+            if (typeof data.tcpServerEnabled !== 'undefined') {
+                const toggle = document.getElementById('tcp-toggle');
+                const status = document.getElementById('tcp-status');
+                const label = document.getElementById('tcp-toggle-label');
+                
+                if (toggle) {
+                    toggle.checked = data.tcpServerEnabled;
+                }
+                if (status) {
+                    status.textContent = data.tcpServerEnabled ? 'Enabled' : 'Disabled';
+                    status.style.color = data.tcpServerEnabled ? '#4caf50' : '#f44336';
+                }
+                // Update label with port number
+                if (label && data.tcpPort) {
+                    label.textContent = `TCP Control Server at port ${data.tcpPort}:`;
+                } else if (label) {
+                    label.textContent = 'TCP Control Server:';
+                }
+            } else if (data.tcpPort) {
+                // Update port even if toggle state not available yet
+                const label = document.getElementById('tcp-toggle-label');
+                if (label) {
+                    label.textContent = `TCP Control Server at port ${data.tcpPort}:`;
+                }
+            }
         }
 
         // Render crosspoint matrix
@@ -578,8 +685,54 @@
             }, 5000);
         }
 
+        // Toggle TCP server
+        async function toggleTcpServer(enabled) {
+            try {
+                const endpoint = enabled ? '/api/tcp/enable' : '/api/tcp/disable';
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({}) // Empty body required!
+                });
+                
+                if (response.ok) {
+                    await fetchStatus(); // Refresh to get updated state
+                } else {
+                    // Revert toggle on error
+                    const toggle = document.getElementById('tcp-toggle');
+                    if (toggle) {
+                        toggle.checked = !enabled;
+                    }
+                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                    showError(`Failed to toggle TCP server: ${errorData.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                // Revert toggle on error
+                const toggle = document.getElementById('tcp-toggle');
+                if (toggle) {
+                    toggle.checked = !enabled;
+                }
+                showError(`Failed to toggle TCP server: ${error.message}`);
+            }
+        }
+
+        // Setup TCP toggle event listener
+        function setupTcpToggle() {
+            const toggle = document.getElementById('tcp-toggle');
+            if (toggle) {
+                toggle.addEventListener('change', async (e) => {
+                    const enabled = e.target.checked;
+                    // Disable toggle during operation
+                    toggle.disabled = true;
+                    await toggleTcpServer(enabled);
+                    toggle.disabled = false;
+                });
+            }
+        }
+
         // Initialize and start auto-refresh
         async function init() {
+            setupTcpToggle();
             await fetchStatus();
             await fetchCrosspoint();
             await fetchInputs();
@@ -587,6 +740,7 @@
 
             // Auto-refresh every 2 seconds
             setInterval(async () => {
+                await fetchStatus(); // Also refresh status to update TCP toggle state
                 await fetchCrosspoint();
                 await fetchInputs();
                 await fetchOutputs();
