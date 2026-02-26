@@ -114,6 +114,24 @@ class WebServer {
       return { success: true, id, connected };
     });
 
+    // Toggle Input Signal Present (Simulation)
+    this.app.post('/api/inputs/:id/signal', async (request, reply) => {
+      const { id } = request.params;
+      const { present } = request.body;
+
+      if (!this.emulator || !this.emulator.state.inputs[id]) {
+        return reply.code(404).send({ error: `Input ${id} not found` });
+      }
+
+      this.emulator.state.inputs[id].SignalPresent = present;
+      if (typeof this.emulator.updateSignalPropagation === 'function') {
+        this.emulator.updateSignalPropagation();
+      }
+
+      return { success: true, id, present };
+    });
+
+
     // Disconnect Endpoint
     this.app.put('/api/destinations/:id/disconnect', async (request, reply) => {
       const { id } = request.params;

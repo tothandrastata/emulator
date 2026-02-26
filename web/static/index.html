@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -254,9 +255,15 @@
             font-size: 13px;
         }
 
-        .xp-cell-clickable { cursor: pointer; transition: all 0.2s; }
-        .xp-cell-clickable:hover { background-color: #e3f2fd; }
-        
+        .xp-cell-clickable {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .xp-cell-clickable:hover {
+            background-color: #e3f2fd;
+        }
+
         .xp-cell-active {
             background: #4caf50;
             position: relative;
@@ -278,6 +285,7 @@
             background: #f8f9fa;
             cursor: pointer;
         }
+
         .xp-cell-inactive:hover {
             background: #e3f2fd;
         }
@@ -353,15 +361,15 @@
             border-radius: 50%;
         }
 
-        .toggle-switch input:checked + .toggle-slider {
+        .toggle-switch input:checked+.toggle-slider {
             background-color: #4caf50;
         }
 
-        .toggle-switch input:checked + .toggle-slider:before {
+        .toggle-switch input:checked+.toggle-slider:before {
             transform: translateX(26px);
         }
 
-        .toggle-switch input:disabled + .toggle-slider {
+        .toggle-switch input:disabled+.toggle-slider {
             opacity: 0.6;
             cursor: not-allowed;
         }
@@ -372,26 +380,127 @@
         }
 
         /* Custom Table Styles for Endpoints */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 14px; }
-        thead th { background: #f8f9fa; font-weight: 600; color: #333; border-bottom: 2px solid #667eea; }
-        tbody tr:hover { background-color: #f8f9fa; }
-        .endpoint-id { font-weight: 600; color: #333; }
-        .ip-badge { background: #e0e0e0; padding: 4px 8px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 14px;
+        }
+
+        thead th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+        }
+
+        tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .endpoint-id {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .ip-badge {
+            background: #e0e0e0;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
 
         /* Modal Styles */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
-        .modal { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 500px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0; padding-bottom: 15px; }
-        .modal-title { font-size: 20px; font-weight: 600; color: #333; }
-        .modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #666; padding: 0; }
-        .form-group { margin-bottom: 15px; }
-        .form-label { display: block; margin-bottom: 8px; font-weight: 500; color: #444; }
-        .form-control { width: 100%; padding: 10px; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 14px; transition: border-color 0.2s; }
-        .form-control:focus { outline: none; border-color: #667eea; }
-        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; border-top: 1px solid #e0e0e0; padding-top: 15px; }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 15px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #444;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 25px;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 15px;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
@@ -447,7 +556,8 @@
     <div id="editEndpointModal" class="modal-overlay">
         <div class="modal">
             <div class="modal-header">
-                <div class="modal-title">Edit Endpoint <span id="edit-endpoint-id-display" style="background:#e0e0e0;padding:2px 8px;border-radius:4px;font-size:16px;"></span></div>
+                <div class="modal-title">Edit Endpoint <span id="edit-endpoint-id-display"
+                        style="background:#e0e0e0;padding:2px 8px;border-radius:4px;font-size:16px;"></span></div>
                 <button class="modal-close" onclick="closeEditModal()">&times;</button>
             </div>
             <div class="modal-body">
@@ -462,7 +572,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-primary" style="background:#e0e0e0;color:#333;" onclick="closeEditModal()">Cancel</button>
+                <button class="btn-primary" style="background:#e0e0e0;color:#333;"
+                    onclick="closeEditModal()">Cancel</button>
                 <button class="btn-primary" onclick="saveEndpointChanges()">Save Changes</button>
             </div>
         </div>
@@ -476,7 +587,7 @@
             loadStatus();
             loadState();
             setupEventListeners();
-            
+
             // Auto-refresh every 2 seconds
             setInterval(() => {
                 loadState();
@@ -498,10 +609,10 @@
                 toggle.addEventListener('change', async (e) => {
                     const enabled = e.target.checked;
                     toggle.disabled = true;
-                    
+
                     try {
                         const action = enabled ? 'enable' : 'disable';
-                        const response = await fetch(`/api/tcp/${action}`, {
+                        const response = await fetch(`api/tcp/${action}`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({})
@@ -520,7 +631,7 @@
 
         async function loadStatus() {
             try {
-                const response = await fetch('/api/status');
+                const response = await fetch('api/status');
                 if (!response.ok) throw new Error('Failed to load status');
                 const data = await response.json();
 
@@ -528,7 +639,7 @@
                 if (data.packageVersion) {
                     infoText += ` - Version ${data.packageVersion}`;
                 }
-                
+
                 document.getElementById('device-info').innerHTML = `
                     <div class="device-info-item">
                         <span class="device-info-label">Product info:</span>
@@ -543,7 +654,7 @@
                 if (data.tcpServerEnabled !== undefined && toggle) {
                     toggle.checked = data.tcpServerEnabled;
                     toggle.disabled = false;
-                    
+
                     tcpStatus.textContent = data.tcpServerEnabled ? 'Enabled' : 'Disabled';
                     tcpStatus.style.color = data.tcpServerEnabled ? '#4caf50' : '#f44336';
                 }
@@ -553,13 +664,13 @@
                 }
             } catch (error) {
                 console.error('Error loading status:', error);
-                
+
             }
         }
 
         async function loadState() {
             try {
-                const response = await fetch('/api/state');
+                const response = await fetch('api/state');
                 if (!response.ok) throw new Error('Failed to load state');
                 emulatorState = await response.json();
 
@@ -628,7 +739,7 @@
             const ipAddress = document.getElementById('edit-ip-address').value;
 
             try {
-                const response = await fetch(`/api/endpoints/${id}`, {
+                const response = await fetch(`api/endpoints/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ deviceLabel, ipAddress })
@@ -648,9 +759,9 @@
             if (!emulatorState.inputs) return;
 
             container.innerHTML = Object.entries(emulatorState.inputs).map(([id, input]) => {
-                let sourceDetails = '-';
                 let srcName = '-';
                 let srcResolution = '-';
+                const hasSignal = input.SignalPresent === true || input.SignalPresent === 'true';
 
                 if (input.Connected) {
                     const srcMatch = id.replace('I', 'S');
@@ -665,24 +776,23 @@
                 <div class="card">
                     <div class="card-header">
                         <span class="card-title">${id}</span>
-                        <span class="status-indicator ${input.Connected ? 'status-active' : 'status-inactive'}"></span>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <span class="status-indicator ${hasSignal ? 'status-active' : 'status-inactive'}" title="Signal Present"></span>
+                            <span class="status-indicator ${input.Connected ? 'status-active' : 'status-inactive'}" title="Connected" style="border: 1px solid #666;"></span>
+                        </div>
                     </div>
                     <div class="card-body">
                         <div class="property">
-                            <span class="property-label">Connected:</span>
-                            <span class="property-value">${input.Connected ? 'Yes' : 'No'}</span>
+                            <span class="property-label">Signal Present:</span>
+                            <span class="property-value" style="color: ${hasSignal ? '#4caf50' : '#666'}">${hasSignal ? 'YES' : 'NO'}</span>
                         </div>
                         <div class="property">
-                            <span class="property-label">Source Name:</span>
+                            <span class="property-label">Name:</span>
                             <span class="property-value">${srcName}</span>
                         </div>
-                        <div class="property">
-                            <span class="property-label">Resolution:</span>
-                            <span class="property-value">${srcResolution}</span>
-                        </div>
                         <div class="button-group">
-                            <button class="btn-success" onclick="toggleInput('${id}', true)">Connect</button>
-                            <button class="btn-danger" onclick="toggleInput('${id}', false)">Disconnect</button>
+                            <button class="btn-success" onclick="toggleSignal('${id}', ${!hasSignal})" style="flex:1">${hasSignal ? 'Stop Signal' : 'Start Signal'}</button>
+                            <button class="btn-primary" onclick="toggleInput('${id}', ${!input.Connected})" style="flex:1">${input.Connected ? 'Disconnect' : 'Connect'}</button>
                         </div>
                     </div>
                 </div>
@@ -690,9 +800,23 @@
             }).join('');
         }
 
+        async function toggleSignal(id, present) {
+            try {
+                const response = await fetch(`api/inputs/${id}/signal`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ present })
+                });
+                if (!response.ok) throw new Error('Failed to toggle signal');
+                loadState();
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
         async function toggleInput(id, connected) {
             try {
-                const response = await fetch(`/api/inputs/${id}/connect`, {
+                const response = await fetch(`api/inputs/${id}/connect`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ connected })
@@ -718,11 +842,15 @@
                 const isRouted = sourceRouted && sourceRouted.length > 0 && sourceRouted !== '0';
                 const srcName = isRouted && emulatorState.sources && emulatorState.sources[sourceRouted] ? emulatorState.sources[sourceRouted].Name : 'None';
 
+                // Get signal present from relative output device!
+                const outMatch = id.replace('D', 'O');
+                const hasSignal = emulatorState.outputs?.[outMatch]?.SignalPresent;
+
                 return `
                 <div class="card">
                     <div class="card-header">
                         <span class="card-title">${id}</span>
-                        <span class="status-indicator ${isRouted ? 'status-active' : 'status-inactive'}"></span>
+                        <span class="status-indicator ${hasSignal ? 'status-active' : 'status-inactive'}"></span>
                     </div>
                     <div class="card-body">
                         <div class="property">
@@ -730,12 +858,12 @@
                             <span class="property-value">${dest.Name}</span>
                         </div>
                         <div class="property">
-                            <span class="property-label">Resolution:</span>
-                            <span class="property-value">${dest.ActiveResolution}@${dest.RefreshRate}Hz</span>
-                        </div>
-                        <div class="property">
                             <span class="property-label">Connected Source:</span>
                             <span class="property-value">${sourceRouted === '0' ? 'None' : sourceRouted}</span>
+                        </div>
+                        <div class="property">
+                            <span class="property-label">Output Signal:</span>
+                            <span class="property-value" style="color: ${hasSignal ? '#4caf50' : '#666'}">${hasSignal ? 'PRESENT' : 'NONE'}</span>
                         </div>
                     </div>
                 </div>
@@ -767,7 +895,7 @@
             // Destination rows
             destinations.forEach(dest => {
                 const connectedSrc = emulatorState.destinations[dest].ConnectedSource || '0';
-                
+
                 html += '<div class="xp-row">';
                 html += `<div class="xp-cell xp-label">${dest}</div>`;
 
@@ -791,7 +919,7 @@
 
         async function disconnectDestination(id) {
             try {
-                const response = await fetch(`/api/destinations/${id}/disconnect`, {
+                const response = await fetch(`api/destinations/${id}/disconnect`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({})
@@ -809,7 +937,7 @@
             }
 
             try {
-                const response = await fetch(`/api/destinations/${id}/route`, {
+                const response = await fetch(`api/destinations/${id}/route`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ source: targetSource })
@@ -822,4 +950,5 @@
         }
     </script>
 </body>
+
 </html>

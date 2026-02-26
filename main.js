@@ -1,7 +1,6 @@
 require('dotenv').config();
 const lwnoodle = require('lwnoodle');
-const express = require('express');
-const path = require('path');
+const { WebServer } = require('./web/WebServer');
 
 // --- Configuration ---
 const PORT = process.env.LW3_PORT || 6107;
@@ -13,24 +12,66 @@ const INPUTS = Array.from({ length: INPUT_COUNT }, (_, i) => `I${101 + i * 100}`
 const OUTPUTS = Array.from({ length: OUTPUT_COUNT }, (_, i) => `O${501 + i * 100}`);
 
 const emulator = {
+    server: null,
+    webServer: null,
+    tcpServerEnabled: true,
     state: {
         inputs: {},
         outputs: {},
-        xp: {} // Dxxx -> Sxxx
-    }
+        xp: {}, // Dxxx -> Sxxx
+        endpoints: {},
+        sources: {},
+        destinations: {}
+    },
+    // Mock TCP control for Web UI
+    startTcpServer: async function () {
+        console.log('Mock TCP Server: STARTING');
+        this.tcpServerEnabled = true;
+        return true;
+    },
+    stopTcpServer: async function () {
+        console.log('Mock TCP Server: STOPPING');
+        this.tcpServerEnabled = false;
+        return true;
+    },
+    isTcpServerEnabled: function () {
+        return this.tcpServerEnabled;
+    },
+    serverConfig: { port: PORT }
 };
 
 // Default State
 INPUTS.forEach((inp, idx) => {
     emulator.state.inputs[inp] = { SignalPresent: idx === 0, Connected: true };
+    const sAlias = `S${inp.substring(1)}`;
+    emulator.state.sources[sAlias] = {
+        Name: `Source ${idx + 1}`,
+        ActiveResolution: '1920x1080',
+        RefreshRate: 60
+    };
 });
 
-OUTPUTS.forEach(out => {
+OUTPUTS.forEach((out, idx) => {
     const dAlias = `D${out.substring(1)}`;
     const sAlias = `S${INPUTS[0].substring(1)}`;
     emulator.state.outputs[out] = { SignalPresent: false, Connected: true };
     emulator.state.xp[dAlias] = sAlias;
+    emulator.state.destinations[dAlias] = {
+        Name: `Destination ${idx + 1}`,
+        ActiveResolution: '1920x1080',
+        RefreshRate: 60,
+        ConnectedSource: sAlias
+    };
 });
+
+// Initialize Endpoints DEVICEMAP
+for (let i = 1; i <= 8; i++) {
+    const ep = `P${i}`;
+    emulator.state.endpoints[ep] = {
+        IpAddress: '0.0.0.0',
+        DeviceLabel: `Device ${i}`
+    };
+}
 
 function updateSignalPropagation() {
     console.log('--- Propagation Update ---');
@@ -46,51 +87,76 @@ function updateSignalPropagation() {
         }
 
         emulator.state.outputs[out].SignalPresent = signal;
-        if (global.server && global.server.MEDIA && global.server.MEDIA.VIDEO && global.server.MEDIA.VIDEO[out]) {
-            global.server.MEDIA.VIDEO[out].SignalPresent = signal;
+        if (emulator.server && emulator.server.MEDIA && emulator.server.MEDIA.VIDEO && emulator.server.MEDIA.VIDEO[out]) {
+            emulator.server.MEDIA.VIDEO[out].SignalPresent = signal;
+        }
+
+        // Update destination state for UI
+        if (emulator.state.destinations[dAlias]) {
+            emulator.state.destinations[dAlias].ConnectedSource = sAlias || '0';
         }
     });
     console.log('--------------------------');
 }
 
 function handleXPSwitch(command) {
-    if (typeof command !== 'string' || !command.includes(':')) throw new Error('Invalid format');
+    if (typeof command !== 'string' || !command.includes(':')) {
+        console.error('LW3 XP SWITCH ERROR: Invalid format', command);
+        throw new Error('Invalid format');
+    }
     const [src, dest] = command.split(':');
     console.log(`LW3 CALL: switch ${src} -> ${dest}`);
-    emulator.state.xp[dest] = src;
+
+    // Handle disconnect (source "0")
+    if (src === '0' || src === 'S0' || !src) {
+        emulator.state.xp[dest] = null;
+    } else {
+        emulator.state.xp[dest] = src;
+    }
+
     updateSignalPropagation();
 }
 
 function handleXPSwitchAll(command) {
     console.log(`LW3 CALL: switchAll to ${command}`);
     Object.keys(emulator.state.xp).forEach(d => {
-        emulator.state.xp[d] = command;
+        if (command === '0' || command === 'S0' || !command) {
+            emulator.state.xp[d] = null;
+        } else {
+            emulator.state.xp[d] = command;
+        }
     });
     updateSignalPropagation();
 }
 
 function initServer() {
     const server = lwnoodle.noodleServer(parseInt(PORT));
-    global.server = server;
+    emulator.server = server;
 
     server.ProductName = 'GVN-MMU-X400';
     server.ManufacturerName = 'Lightware';
+    server.PartNumber = '91710013';
+    server.SerialNumber = 'EMULATOR-GVN';
+    server.PackageVersion = '1.0.0';
 
     // Endpoints
     server.ENDPOINTS = { DEVICEMAP: {} };
-    for (let i = 1; i <= 8; i++) {
-        const ep = `P${i}`;
-        server.ENDPOINTS.DEVICEMAP[ep] = {
-            IpAddress: '0.0.0.0', IpAddress__rw__: true,
-            DeviceLabel: `Device ${i}`, DeviceLabel__rw__: true
+    Object.entries(emulator.state.endpoints).forEach(([id, ep]) => {
+        server.ENDPOINTS.DEVICEMAP[id] = {
+            IpAddress: ep.IpAddress, IpAddress__rw__: true,
+            DeviceLabel: ep.DeviceLabel, DeviceLabel__rw__: true
         };
-    }
+    });
 
     server.MEDIA = { VIDEO: {} };
     server.MEDIA.VIDEO.XP = {
         'switch__method__': handleXPSwitch,
-        'switchAll__method__': handleXPSwitchAll
+        'switchAll__method__': handleXPSwitchAll,
+        // Expose as direct functions for WebServer.js
+        'switch': handleXPSwitch,
+        'switchAll': handleXPSwitchAll
     };
+
 
     // Add S/D aliases to XP node
     INPUTS.forEach(inp => server.MEDIA.VIDEO.XP[`S${inp.substring(1)}`] = { StreamAlias: inp });
@@ -136,22 +202,11 @@ function initServer() {
 }
 
 function startWebUI() {
-    const app = express();
-    app.use(express.json());
-    app.use(express.static(path.join(__dirname, 'web/static')));
-    app.get('/api/state', (req, res) => res.json(emulator.state));
-    app.post('/api/input/:id/signal', (req, res) => {
-        const { id } = req.params;
-        const { present } = req.body;
-        if (emulator.state.inputs[id]) {
-            emulator.state.inputs[id].SignalPresent = present;
-            updateSignalPropagation();
-            res.json({ success: true });
-        } else {
-            res.status(404).json({ error: 'Not found' });
-        }
+    emulator.updateSignalPropagation = updateSignalPropagation;
+    emulator.webServer = new WebServer(emulator.server, { port: WEB_PORT }, emulator);
+    emulator.webServer.start(WEB_PORT).catch(err => {
+        console.error('Web UI failed to start:', err);
     });
-    app.listen(WEB_PORT, () => console.log(`Web UI: http://localhost:${WEB_PORT}`));
 }
 
 try {
@@ -160,3 +215,4 @@ try {
 } catch (e) {
     console.error('Startup failed:', e);
 }
+
