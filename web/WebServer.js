@@ -53,7 +53,7 @@ class WebServer {
    */
   setupRoutes() {
     this.registerStatusRoute();
-    this.registerLayerRoutes();
+    this.registerMediaRoutes();
     this.registerTcpRoutes();
   }
 
@@ -69,7 +69,7 @@ class WebServer {
         packageVersion: this.noodleServer.PackageVersion,
         matrixSize: 3
       };
-      
+
       // Include TCP server state and port if emulator is available
       if (this.emulator) {
         if (typeof this.emulator.isTcpServerEnabled === 'function') {
@@ -77,155 +77,91 @@ class WebServer {
         } else if (typeof this.emulator.tcpServerEnabled !== 'undefined') {
           response.tcpServerEnabled = this.emulator.tcpServerEnabled;
         }
-        
+
         // Include TCP port from server config
         if (this.emulator.serverConfig && this.emulator.serverConfig.port) {
           response.tcpPort = this.emulator.serverConfig.port;
         }
       }
-      
+
       return response;
     });
   }
 
   /**
-   * Register layer-specific routes (VIDEO, AUDIO, USBICRON, USBHID)
+   * Register API routes for Endpoints and Media
    */
-  registerLayerRoutes() {
-    // GET /api/layer/:layer/inputs - Get all TX (input) nodes for a layer
-    this.app.get('/api/layer/:layer/inputs', async (request, _reply) => {
-      const { layer } = request.params;
-      const inputs = [];
-      const mediaLayer = this.noodleServer.V1?.MEDIA?.[layer];
-
-      if (!mediaLayer) {
-        return { inputs: [] };
+  registerMediaRoutes() {
+    this.app.get('/api/state', async (_request, _reply) => {
+      if (!this.emulator || !this.emulator.state) {
+        return { error: 'Emulator state not found' };
       }
-
-      const mediaJson = mediaLayer.toJSON();
-      Object.keys(mediaJson).forEach(nodeName => {
-        if (nodeName.endsWith('_S0')) {
-          const node = mediaJson[nodeName];
-          inputs.push({
-            nodeName: nodeName,
-            alias: node.StreamAlias,
-            signalPresent: node.SignalPresent === 'true' || node.SignalPresent === true,
-            enabled: node.Enabled === 'true' || node.Enabled === true
-          });
-        }
-      });
-
-      return { inputs };
+      return this.emulator.state;
     });
 
-    // GET /api/layer/:layer/outputs - Get all RX (output) nodes for a layer
-    this.app.get('/api/layer/:layer/outputs', async (request, _reply) => {
-      const { layer } = request.params;
-      const outputs = [];
-      const mediaLayer = this.noodleServer.V1?.MEDIA?.[layer];
+    // Toggle Input Connected Status
+    this.app.put('/api/inputs/:id/connect', async (request, reply) => {
+      const { id } = request.params;
+      const { connected } = request.body;
 
-      if (!mediaLayer) {
-        return { outputs: [] };
+      if (!this.emulator || !this.emulator.server?.MEDIA?.VIDEO?.[id]) {
+        return reply.code(404).send({ error: `Input ${id} not found` });
       }
 
-      const mediaJson = mediaLayer.toJSON();
-      Object.keys(mediaJson).forEach(nodeName => {
-        if (nodeName.endsWith('_D0')) {
-          const node = mediaJson[nodeName];
-          outputs.push({
-            nodeName: nodeName,
-            alias: node.StreamAlias,
-            signalPresent: node.SignalPresent === 'true' || node.SignalPresent === true,
-            sourceStream: node.SourceStream || '',
-            sourceStreamAlias: node.SourceStreamAlias || ''
-          });
-        }
-      });
+      this.emulator.server.MEDIA.VIDEO[id].Connected = connected;
+      this.emulator.state.inputs[id].Connected = connected;
 
-      return { outputs };
+      return { success: true, id, connected };
     });
 
-    // GET /api/layer/:layer/crosspoint - Get crosspoint matrix for a layer
-    this.app.get('/api/layer/:layer/crosspoint', async (request, _reply) => {
-      const { layer } = request.params;
-      const matrix = [];
-      const inputs = [];
-      const mediaLayer = this.noodleServer.V1?.MEDIA?.[layer];
-
-      if (!mediaLayer) {
-        return { matrix: [], inputs: [] };
+    // Disconnect Endpoint
+    this.app.put('/api/destinations/:id/disconnect', async (request, reply) => {
+      const { id } = request.params;
+      if (!this.emulator || !this.emulator.server?.MEDIA?.VIDEO?.XP?.[id]) {
+        return reply.code(404).send({ error: `Destination ${id} not found` });
       }
-
-      const mediaJson = mediaLayer.toJSON();
-
-      // Collect inputs (TX nodes)
-      Object.keys(mediaJson).forEach(nodeName => {
-        if (nodeName.endsWith('_S0')) {
-          const node = mediaJson[nodeName];
-          inputs.push({
-            nodeName: nodeName,
-            alias: node.StreamAlias,
-            signalPresent: node.SignalPresent === 'true' || node.SignalPresent === true
-          });
-        }
-      });
-
-      // Collect outputs (RX nodes) with their connections
-      Object.keys(mediaJson).forEach(nodeName => {
-        if (nodeName.endsWith('_D0')) {
-          const node = mediaJson[nodeName];
-          matrix.push({
-            nodeName: nodeName,
-            alias: node.StreamAlias,
-            sourceStream: node.SourceStream || '',
-            sourceStreamAlias: node.SourceStreamAlias || '',
-            signalPresent: node.SignalPresent === 'true' || node.SignalPresent === true
-          });
-        }
-      });
-
-      return { matrix, inputs };
+      try {
+        this.emulator.server.MEDIA.VIDEO.XP.switch(`0:${id}`);
+        return { success: true, id, connectedSource: '' };
+      } catch (err) {
+        return reply.code(400).send({ error: err.message });
+      }
     });
 
-    // PUT /api/layer/:layer/inputs/:alias/signal - Set SignalPresent for an input
-    this.app.put('/api/layer/:layer/inputs/:alias/signal', async (request, reply) => {
-      const { layer, alias } = request.params;
-      const { signalPresent } = request.body;
+    // Route Endpoint
+    this.app.put('/api/destinations/:id/route', async (request, reply) => {
+      const { id } = request.params;
+      const { source } = request.body;
+      if (!this.emulator || !this.emulator.server?.MEDIA?.VIDEO?.XP?.[id]) {
+        return reply.code(404).send({ error: `Destination ${id} not found` });
+      }
+      try {
+        this.emulator.server.MEDIA.VIDEO.XP.switch(`${source}:${id}`);
+        return { success: true, id, connectedSource: source };
+      } catch (err) {
+        return reply.code(400).send({ error: err.message });
+      }
+    });
 
-      // Validate request body
-      if (typeof signalPresent !== 'boolean') {
-        return reply.code(400).send({ error: 'signalPresent must be a boolean' });
+    // Update DeviceMap
+    this.app.put('/api/endpoints/:id', async (request, reply) => {
+      const { id } = request.params;
+      const { ipAddress, deviceLabel } = request.body;
+
+      if (!this.emulator || !this.emulator.server?.ENDPOINTS?.DEVICEMAP?.[id]) {
+        return reply.code(404).send({ error: `Endpoint ${id} not found` });
       }
 
-      const mediaLayer = this.noodleServer.V1?.MEDIA?.[layer];
-      if (!mediaLayer) {
-        return reply.code(404).send({ error: `Layer ${layer} not found` });
+      if (ipAddress !== undefined) {
+        this.emulator.server.ENDPOINTS.DEVICEMAP[id].IpAddress = ipAddress;
+        this.emulator.state.endpoints[id].IpAddress = ipAddress;
+      }
+      if (deviceLabel !== undefined) {
+        this.emulator.server.ENDPOINTS.DEVICEMAP[id].DeviceLabel = deviceLabel;
+        this.emulator.state.endpoints[id].DeviceLabel = deviceLabel;
       }
 
-      // Find the node by StreamAlias
-      const mediaJson = mediaLayer.toJSON();
-      let foundNodeName = null;
-
-      Object.keys(mediaJson).forEach(nodeName => {
-        if (nodeName.endsWith('_S0') && mediaJson[nodeName].StreamAlias === alias) {
-          foundNodeName = nodeName;
-        }
-      });
-
-      if (!foundNodeName) {
-        return reply.code(404).send({ error: `Input ${alias} not found in layer ${layer}` });
-      }
-
-      // Set SignalPresent (triggers event listeners in emulator)
-      mediaLayer[foundNodeName].SignalPresent = signalPresent;
-
-      console.log(`Web UI: Set ${layer} input ${alias} SignalPresent to ${signalPresent}`);
-
-      return {
-        nodeName: foundNodeName,
-        alias: alias,
-        signalPresent: mediaLayer[foundNodeName].SignalPresent
-      };
+      return { success: true, endpoint: this.emulator.state.endpoints[id] };
     });
   }
 

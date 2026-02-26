@@ -1,4 +1,9 @@
-<!DOCTYPE html>
+const fs = require('fs');
+const path = require('path');
+
+const targetFile = 'C:\\Taurus\\LARA\\GVN\\emulator\\web\\static\\index.html';
+
+const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -486,7 +491,7 @@
 
         function showError(message) {
             const container = document.getElementById('error-container');
-            container.innerHTML = `<div class="error">${message}</div>`;
+            container.innerHTML = \`<div class="error">\${message}</div>\`;
             setTimeout(() => {
                 container.innerHTML = '';
             }, 5000);
@@ -501,12 +506,12 @@
                     
                     try {
                         const action = enabled ? 'enable' : 'disable';
-                        const response = await fetch(`/api/tcp/${action}`, {
+                        const response = await fetch(\`/api/tcp/\${action}\`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({})
                         });
-                        if (!response.ok) throw new Error(`Failed to ${action} TCP server`);
+                        if (!response.ok) throw new Error(\`Failed to \${action} TCP server\`);
                     } catch (error) {
                         showError(error.message);
                         e.target.checked = !enabled; // Revert visually
@@ -524,17 +529,17 @@
                 if (!response.ok) throw new Error('Failed to load status');
                 const data = await response.json();
 
-                let infoText = `${data.productName} (PN: ${data.partNumber}, SN: ${data.serialNumber})`;
+                let infoText = \`\${data.productName} (PN: \${data.partNumber}, SN: \${data.serialNumber})\`;
                 if (data.packageVersion) {
-                    infoText += ` - Version ${data.packageVersion}`;
+                    infoText += \` - Version \${data.packageVersion}\`;
                 }
                 
-                document.getElementById('device-info').innerHTML = `
+                document.getElementById('device-info').innerHTML = \`
                     <div class="device-info-item">
                         <span class="device-info-label">Product info:</span>
-                        <span>${infoText}</span>
+                        <span>\${infoText}</span>
                     </div>
-                `;
+                \`;
 
                 const toggle = document.getElementById('tcp-server-toggle');
                 const tcpStatus = document.getElementById('tcp-status');
@@ -549,7 +554,7 @@
                 }
 
                 if (data.tcpPort && tcpLabel) {
-                    tcpLabel.textContent = `TCP Control Server at port ${data.tcpPort}:`;
+                    tcpLabel.textContent = \`TCP Control Server at port \${data.tcpPort}:\`;
                 }
             } catch (error) {
                 console.error('Error loading status:', error);
@@ -575,7 +580,7 @@
             const container = document.getElementById('endpoints-container');
             if (!emulatorState.endpoints) return;
 
-            let html = `
+            let html = \`
                 <table>
                     <thead>
                         <tr>
@@ -586,25 +591,25 @@
                         </tr>
                     </thead>
                     <tbody>
-            `;
+            \`;
 
             Object.entries(emulatorState.endpoints).forEach(([id, endpoint]) => {
-                html += `
+                html += \`
                     <tr>
-                        <td class="endpoint-id">${id}</td>
-                        <td>${endpoint.DeviceLabel}</td>
-                        <td><span class="ip-badge">${endpoint.IpAddress}</span></td>
+                        <td class="endpoint-id">\${id}</td>
+                        <td>\${endpoint.DeviceLabel}</td>
+                        <td><span class="ip-badge">\${endpoint.IpAddress}</span></td>
                         <td style="text-align: right;">
-                            <button class="btn-primary" onclick="openEditModal('${id}')">Edit</button>
+                            <button class="btn-primary" onclick="openEditModal('\${id}')">Edit</button>
                         </td>
                     </tr>
-                `;
+                \`;
             });
 
-            html += `
+            html += \`
                     </tbody>
                 </table>
-            `;
+            \`;
             container.innerHTML = html;
         }
 
@@ -628,7 +633,7 @@
             const ipAddress = document.getElementById('edit-ip-address').value;
 
             try {
-                const response = await fetch(`/api/endpoints/${id}`, {
+                const response = await fetch(\`/api/endpoints/\${id}\`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ deviceLabel, ipAddress })
@@ -657,42 +662,42 @@
                     const srcInfo = emulatorState.sources?.[srcMatch];
                     if (srcInfo) {
                         srcName = srcInfo.Name || 'Unknown';
-                        srcResolution = `${srcInfo.ActiveResolution}@${srcInfo.RefreshRate}Hz`;
+                        srcResolution = \`\${srcInfo.ActiveResolution}@\${srcInfo.RefreshRate}Hz\`;
                     }
                 }
 
-                return `
+                return \`
                 <div class="card">
                     <div class="card-header">
-                        <span class="card-title">${id}</span>
-                        <span class="status-indicator ${input.Connected ? 'status-active' : 'status-inactive'}"></span>
+                        <span class="card-title">\${id}</span>
+                        <span class="status-indicator \${input.Connected ? 'status-active' : 'status-inactive'}"></span>
                     </div>
                     <div class="card-body">
                         <div class="property">
                             <span class="property-label">Connected:</span>
-                            <span class="property-value">${input.Connected ? 'Yes' : 'No'}</span>
+                            <span class="property-value">\${input.Connected ? 'Yes' : 'No'}</span>
                         </div>
                         <div class="property">
                             <span class="property-label">Source Name:</span>
-                            <span class="property-value">${srcName}</span>
+                            <span class="property-value">\${srcName}</span>
                         </div>
                         <div class="property">
                             <span class="property-label">Resolution:</span>
-                            <span class="property-value">${srcResolution}</span>
+                            <span class="property-value">\${srcResolution}</span>
                         </div>
                         <div class="button-group">
-                            <button class="btn-success" onclick="toggleInput('${id}', true)">Connect</button>
-                            <button class="btn-danger" onclick="toggleInput('${id}', false)">Disconnect</button>
+                            <button class="btn-success" onclick="toggleInput('\${id}', true)">Connect</button>
+                            <button class="btn-danger" onclick="toggleInput('\${id}', false)">Disconnect</button>
                         </div>
                     </div>
                 </div>
-                `;
+                \`;
             }).join('');
         }
 
         async function toggleInput(id, connected) {
             try {
-                const response = await fetch(`/api/inputs/${id}/connect`, {
+                const response = await fetch(\`/api/inputs/\${id}/connect\`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ connected })
@@ -718,28 +723,28 @@
                 const isRouted = sourceRouted && sourceRouted.length > 0 && sourceRouted !== '0';
                 const srcName = isRouted && emulatorState.sources && emulatorState.sources[sourceRouted] ? emulatorState.sources[sourceRouted].Name : 'None';
 
-                return `
+                return \`
                 <div class="card">
                     <div class="card-header">
-                        <span class="card-title">${id}</span>
-                        <span class="status-indicator ${isRouted ? 'status-active' : 'status-inactive'}"></span>
+                        <span class="card-title">\${id}</span>
+                        <span class="status-indicator \${isRouted ? 'status-active' : 'status-inactive'}"></span>
                     </div>
                     <div class="card-body">
                         <div class="property">
                             <span class="property-label">Name:</span>
-                            <span class="property-value">${dest.Name}</span>
+                            <span class="property-value">\${dest.Name}</span>
                         </div>
                         <div class="property">
                             <span class="property-label">Resolution:</span>
-                            <span class="property-value">${dest.ActiveResolution}@${dest.RefreshRate}Hz</span>
+                            <span class="property-value">\${dest.ActiveResolution}@\${dest.RefreshRate}Hz</span>
                         </div>
                         <div class="property">
                             <span class="property-label">Connected Source:</span>
-                            <span class="property-value">${sourceRouted === '0' ? 'None' : sourceRouted}</span>
+                            <span class="property-value">\${sourceRouted === '0' ? 'None' : sourceRouted}</span>
                         </div>
                     </div>
                 </div>
-                `;
+                \`;
             }).join('');
         }
 
@@ -757,10 +762,10 @@
 
             // Header row
             html += '<div class="xp-row">';
-            html += '<div class="xp-cell xp-header">Dest \ Source</div>';
+            html += '<div class="xp-cell xp-header">Dest \\ Source</div>';
             html += '<div class="xp-cell xp-header">Disconnect</div>';
             sources.forEach(src => {
-                html += `<div class="xp-cell xp-header">${src}</div>`;
+                html += \`<div class="xp-cell xp-header">\${src}</div>\`;
             });
             html += '</div>';
 
@@ -769,17 +774,17 @@
                 const connectedSrc = emulatorState.destinations[dest].ConnectedSource || '0';
                 
                 html += '<div class="xp-row">';
-                html += `<div class="xp-cell xp-label">${dest}</div>`;
+                html += \`<div class="xp-cell xp-label">\${dest}</div>\`;
 
                 // Disconnect cell
                 const isDisc = (!connectedSrc || connectedSrc === '0' || connectedSrc === '');
-                html += `<div class="xp-cell ${isDisc ? 'xp-cell-disconnect-active' : 'xp-cell-disconnect'}" onclick="routeDestination('${dest}', '0')">${isDisc ? 'X' : 'Disc.'}</div>`;
+                html += \`<div class="xp-cell \${isDisc ? 'xp-cell-disconnect-active' : 'xp-cell-disconnect'}" onclick="routeDestination('\${dest}', '0')">\${isDisc ? 'X' : 'Disc.'}</div>\`;
 
                 // Source cells
                 sources.forEach(src => {
                     const isConn = connectedSrc === src;
                     const cellClass = isConn ? 'xp-cell-active' : 'xp-cell-inactive';
-                    html += `<div class="xp-cell ${cellClass}" onclick="routeDestination('${dest}', '${src}')"></div>`;
+                    html += \`<div class="xp-cell \${cellClass}" onclick="routeDestination('\${dest}', '\${src}')"></div>\`;
                 });
 
                 html += '</div>';
@@ -791,7 +796,7 @@
 
         async function disconnectDestination(id) {
             try {
-                const response = await fetch(`/api/destinations/${id}/disconnect`, {
+                const response = await fetch(\`/api/destinations/\${id}/disconnect\`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({})
@@ -809,7 +814,7 @@
             }
 
             try {
-                const response = await fetch(`/api/destinations/${id}/route`, {
+                const response = await fetch(\`/api/destinations/\${id}/route\`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ source: targetSource })
@@ -822,4 +827,7 @@
         }
     </script>
 </body>
-</html>
+</html>`;
+
+fs.writeFileSync(targetFile, htmlContent, 'utf-8');
+console.log('Successfully wrote replacement index.html.');

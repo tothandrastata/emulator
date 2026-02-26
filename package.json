@@ -1,13 +1,13 @@
 {
-  "name": "tpn_mmu_emulator",
+  "name": "gvn_mmu_emulator",
   "version": "1.0.0",
-  "description": "",
+  "description": "Emulator for the GVN MMU LW3 protocol",
   "main": "main.js",
   "scripts": {
     "start": "node main.js",
     "dev": "nodemon main.js",
     "build": "node build.js",
-    "build:linux-arm": "pkg main.js --targets node16-linux-armv7 --output dist/tpn-mmu-emulator",
+    "build:linux-arm": "pkg main.js --targets node16-linux-armv7 --output dist/gvn-mmu-emulator",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
